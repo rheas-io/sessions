@@ -9,7 +9,7 @@ export class Session implements ISession {
      * 
      * @var AnyObject
      */
-    protected _data: AnyObject = {};
+    protected _data: AnyObject;
 
     /**
      * Last session accessed time in milliseconds.
@@ -17,6 +17,15 @@ export class Session implements ISession {
      * @var number
      */
     protected _lastAccessed: number = Date.now();
+
+    /**
+     * Creates a new session from the given data.
+     * 
+     * @param data 
+     */
+    constructor(data: AnyObject = {}) {
+        this._data = data;
+    }
 
     /**
      * Returns the last accessed time in milliseconds.

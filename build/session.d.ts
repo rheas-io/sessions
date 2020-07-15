@@ -14,6 +14,12 @@ export declare class Session implements ISession {
      */
     protected _lastAccessed: number;
     /**
+     * Creates a new session from the given data.
+     *
+     * @param data
+     */
+    constructor(data?: AnyObject);
+    /**
      * Returns the last accessed time in milliseconds.
      *
      * @returns string

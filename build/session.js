@@ -2,19 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var support_1 = require("@rheas/support");
 var Session = /** @class */ (function () {
-    function Session() {
-        /**
-         * Complete session data.
-         *
-         * @var AnyObject
-         */
-        this._data = {};
+    /**
+     * Creates a new session from the given data.
+     *
+     * @param data
+     */
+    function Session(data) {
+        if (data === void 0) { data = {}; }
         /**
          * Last session accessed time in milliseconds.
          *
          * @var number
          */
         this._lastAccessed = Date.now();
+        this._data = data;
     }
     /**
      * Returns the last accessed time in milliseconds.
