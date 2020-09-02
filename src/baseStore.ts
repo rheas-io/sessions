@@ -1,22 +1,22 @@
-import { AnyObject } from "@rheas/contracts";
-import { IEncrypter } from "@rheas/contracts/security";
-import { DecryptException } from "@rheas/errors/decrypt";
-import { ISessionStore, ISession } from "@rheas/contracts/sessions";
-import { Str } from "@rheas/support";
+import { Session } from './session';
+import { Str } from '@rheas/support';
+import { AnyObject } from '@rheas/contracts';
+import { IEncrypter } from '@rheas/contracts/security';
+import { DecryptException } from '@rheas/errors/decrypt';
+import { ISession, ISessionStore, ISessionState } from '@rheas/contracts/sessions';
 
 export abstract class BaseStore implements ISessionStore {
-
     /**
      * Encryption status flag. All stores should encrypt session
      * data by default, unless explicitely disallowed.
-     * 
+     *
      * @var boolean
      */
     protected _shouldEncrypt: boolean = true;
 
     /**
      * Application encryption handler.
-     * 
+     *
      * @var IEncrypter
      */
     protected _encrypter: IEncrypter;
@@ -24,8 +24,8 @@ export abstract class BaseStore implements ISessionStore {
     /**
      * Creates a base store which takes care of session encryption
      * which is common for all store.
-     * 
-     * @param encrypter 
+     *
+     * @param encrypter
      */
     constructor(encrypter: IEncrypter) {
         this._encrypter = encrypter;
@@ -33,60 +33,84 @@ export abstract class BaseStore implements ISessionStore {
 
     /**
      * Saves the session on the store.
-     * 
-     * @param session 
+     *
+     * @param session
      */
-    public abstract save(session: ISession): boolean;
+    public abstract save(session: ISession): Promise<boolean>;
 
     /**
      * Reads the session of paramter id from the store.
-     * 
-     * @param id 
+     *
+     * @param id
      */
     public abstract read(id: string): Promise<ISession | null>;
 
     /**
      * Removes the session of param id from the store.
-     * 
-     * @param id 
+     *
+     * @param id
      */
     public abstract remove(id: string): boolean;
 
     /**
      * Removes expired sessions from the store.
-     * 
-     * @returns 
+     *
+     * @returns
      */
     public abstract clear(): boolean;
 
     /**
-     * Returns the data to be saved on the store. Returned value is 
+     * Returns the data to be saved on the store. Returned value is
      * base64 encoded value of JSON stringified { session:data, ecrypted: value }
-     * The session data can be either encrypted value of JSON string or the 
+     * The session data can be either encrypted value of JSON string or the
      * JSON as it is, if encryption is turned off.
-     * 
-     * @param session 
+     *
+     * @param session
      */
-    protected async sessionDataToSave(session: ISession): Promise<string> {
+    protected async encode(session: ISession): Promise<string> {
+        const dataToSave: ISessionState = { session: '', encrypted: false };
 
-        let dataToSave = { session: "", encrypted: false };
+        // Touch the session before encoding it, so that the last
+        // accessed time is updated to now.
+        session = session.touch();
 
-        try {
+        if (this._shouldEncrypt) {
+            dataToSave.session = await this.encrypt(session);
+            dataToSave.encrypted = true;
+        }
+        // If session should not be encrypted, set the session value
+        // to json string of the session data.
+        else {
             dataToSave.session = JSON.stringify(session.data());
-
-            if (this._shouldEncrypt) {
-                dataToSave.session = await this.encrypt(session);
-                dataToSave.encrypted = true;
-            }
-        } catch (err) { }
+        }
 
         return Str.base64Encode(JSON.stringify(dataToSave));
     }
 
     /**
+     * Returnes a session from the encoded session data saved
+     * in the store. Initially decodes the data, then parses it
+     * into the ISessionState and performs the necessary process
+     * depending on the value of session state "encrypted" key.
+     *
+     * @param data
+     */
+    protected decode(data: string): ISession {
+        const sessionData: ISessionState = JSON.parse(Str.base64Decode(data));
+
+        if (sessionData.encrypted) {
+            return new Session(this.decrypt(sessionData.session));
+        }
+        // If the session is not encrypted, the value of
+        // sessionData.session will be JSON string of the
+        // session data. Parse it and return a new session.
+        return new Session(JSON.parse(sessionData.session));
+    }
+
+    /**
      * Encrypts the session data and returns the encrypted string
-     * 
-     * @param session 
+     *
+     * @param session
      */
     public async encrypt(session: ISession): Promise<string> {
         return await this._encrypter.encrypt(session.data());
@@ -94,8 +118,8 @@ export abstract class BaseStore implements ISessionStore {
 
     /**
      * Decrypts the session data and returns an object.
-     * 
-     * @param data 
+     *
+     * @param data
      */
     public decrypt(data: string): AnyObject {
         const decrypted = this._encrypter.decrypt(data);
@@ -109,8 +133,8 @@ export abstract class BaseStore implements ISessionStore {
     /**
      * Sets the encryption flag. By default, all session store
      * data are encrypted.
-     * 
-     * @param encrypt 
+     *
+     * @param encrypt
      */
     public shouldEncrypt(encrypt: boolean): ISessionStore {
         this._shouldEncrypt = encrypt;

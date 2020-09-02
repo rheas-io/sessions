@@ -1,27 +1,26 @@
-import { Obj } from "@rheas/support";
-import { AnyObject } from "@rheas/contracts";
-import { ISession } from "@rheas/contracts/sessions";
+import { Obj } from '@rheas/support';
+import { AnyObject } from '@rheas/contracts';
+import { ISession } from '@rheas/contracts/sessions';
 
 export class Session implements ISession {
-
     /**
      * Complete session data.
-     * 
+     *
      * @var AnyObject
      */
     protected _data: AnyObject;
 
     /**
      * Last session accessed time in milliseconds.
-     * 
+     *
      * @var number
      */
     protected _lastAccessed: number = Date.now();
 
     /**
      * Creates a new session from the given data.
-     * 
-     * @param data 
+     *
+     * @param data
      */
     constructor(data: AnyObject = {}) {
         this._data = data;
@@ -29,7 +28,7 @@ export class Session implements ISession {
 
     /**
      * Returns the last accessed time in milliseconds.
-     * 
+     *
      * @returns string
      */
     public lastAccessed(): number {
@@ -38,7 +37,7 @@ export class Session implements ISession {
 
     /**
      * Updates the last accessed time.
-     * 
+     *
      * @returns this
      */
     public touch(): ISession {
@@ -49,12 +48,12 @@ export class Session implements ISession {
 
     /**
      * Returns the session id.
-     * 
+     *
      * @params sessionId
-     * 
-     * @returns 
+     *
+     * @returns
      */
-    public id(sessionId: string = ""): string {
+    public id(sessionId: string = ''): string {
         if (sessionId) {
             this.set('id', sessionId);
             return sessionId;
@@ -64,11 +63,11 @@ export class Session implements ISession {
 
     /**
      * Returns the session CSRF token.
-     * 
+     *
      * @params token
      * @returns
      */
-    public csrf(token: string = ""): string {
+    public csrf(token: string = ''): string {
         if (token) {
             this.set('csrf', token);
 
@@ -80,11 +79,11 @@ export class Session implements ISession {
     /**
      * Gets the session data for the key. If no value is found, defaultValue
      * is returned.
-     * 
+     *
      * Supports deep get using dotted format.
-     * 
-     * @param key 
-     * @param defaultValue 
+     *
+     * @param key
+     * @param defaultValue
      */
     public get(key: string, defaultValue: any = null): any {
         return Obj.get(this._data, key, defaultValue);
@@ -92,9 +91,9 @@ export class Session implements ISession {
 
     /**
      * Sets a new data on the session field.
-     * 
-     * @param key 
-     * @param value 
+     *
+     * @param key
+     * @param value
      */
     public set(key: string, value: any): ISession {
         this._data[key] = value;
@@ -104,11 +103,10 @@ export class Session implements ISession {
 
     /**
      * Returns the complete session data.
-     * 
+     *
      * @returns object
      */
     public data(): AnyObject {
         return this._data;
     }
-
 }
