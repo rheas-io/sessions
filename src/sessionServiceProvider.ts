@@ -1,15 +1,15 @@
 import { IApp } from '@rheas/contracts/core';
 import { SessionManager } from './sessionManager';
 import { DeferredServiceProvider } from '@rheas/services';
+import { InstanceHandler } from '@rheas/contracts/container';
 
 export class SessionServiceProvider extends DeferredServiceProvider {
     /**
-     * Registers a session manager on the app instance. Session manager
-     * takes care of reading/writing/deleting session data.
+     * Returns the session's service resolver.
+     *
+     * @returns
      */
-    public register() {
-        this.container.singleton('session', (app) => {
-            return new SessionManager(app as IApp);
-        });
+    public serviceResolver(): InstanceHandler {
+        return (app) => new SessionManager(app as IApp);
     }
 }
