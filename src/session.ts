@@ -1,8 +1,23 @@
-import { Obj } from '@rheas/support';
+import { Obj, Str } from '@rheas/support';
 import { AnyObject } from '@rheas/contracts';
 import { ISession } from '@rheas/contracts/sessions';
+import { InvalidArgumentException } from '@rheas/errors/invalidArgument';
 
 export class Session implements ISession {
+    /**
+     * Session id.
+     *
+     * @var string
+     */
+    protected _id: string;
+
+    /**
+     * Session expiry time in epoch ms.
+     *
+     * @var number
+     */
+    protected _expiry: number;
+
     /**
      * Complete session data.
      *
@@ -11,37 +26,79 @@ export class Session implements ISession {
     protected _data: AnyObject;
 
     /**
-     * Last session accessed time in milliseconds.
-     *
-     * @var number
-     */
-    protected _lastAccessed: number = Date.now();
-
-    /**
      * Creates a new session from the given data.
      *
+     * @param id
      * @param data
+     * @param lastAccessed
      */
-    constructor(data: AnyObject = {}) {
+    constructor(id: string, expiry: number, data: AnyObject = {}) {
+        // Use the id setter, so that if it is not a valid id
+        // an exception will be thrown.
+        this._id = this.setId(id).getId();
+
+        this._expiry = expiry;
         this._data = data;
     }
 
     /**
-     * Returns the last accessed time in milliseconds.
+     * Creates a new session that expires at the given epoch time.
      *
-     * @returns string
+     * @param expiry
      */
-    public lastAccessed(): number {
-        return this._lastAccessed;
+    public static async createSession(expiry: number): Promise<ISession> {
+        const id = await Str.random(40);
+
+        return new Session(id, expiry);
     }
 
     /**
-     * Updates the last accessed time.
+     * Returns true if the token is a valid session token.
      *
-     * @returns this
+     * @param token
      */
-    public touch(): ISession {
-        this._lastAccessed = Date.now();
+    public static isValidToken(token: string): boolean {
+        // Tokens should be an alphanumeric string with 0-9, A-Z and
+        // a-z as the only characters and it should also be 40 chars
+        // in length.
+        return token.length === 40 && Str.isAlphaNum(token);
+    }
+
+    /**
+     * Sets a new session id.
+     *
+     * @param id
+     */
+    public setId(id: string): ISession {
+        if (!Session.isValidToken(id)) {
+            throw new InvalidArgumentException('The given session id is not valid.');
+        }
+        this._id = id;
+
+        return this;
+    }
+
+    /**
+     * Sets the session expiry.
+     *
+     * @param timestamp
+     */
+    public setExpiry(timestamp: number): ISession {
+        this._expiry = timestamp;
+
+        return this;
+    }
+
+    /**
+     * Sets a new CSRF token on the session.
+     *
+     * @param token
+     */
+    public setCsrf(token: string): ISession {
+        if (!Session.isValidToken(token)) {
+            throw new InvalidArgumentException('The given CSRF token is not valid.');
+        }
+        this.set('csrf', token);
 
         return this;
     }
@@ -49,30 +106,37 @@ export class Session implements ISession {
     /**
      * Returns the session id.
      *
-     * @params sessionId
-     *
      * @returns
      */
-    public id(sessionId: string = ''): string {
-        if (sessionId) {
-            this.set('id', sessionId);
-            return sessionId;
-        }
-        return this.get('id');
+    public getId(): string {
+        return this._id;
     }
 
     /**
-     * Returns the session CSRF token.
+     * Returns the session expiry time in epoch ms.
      *
-     * @params token
      * @returns
      */
-    public csrf(token: string = ''): string {
-        if (token) {
-            this.set('csrf', token);
+    public getExpiry(): number {
+        return this._expiry;
+    }
 
-            return token;
-        }
+    /**
+     * Returns true if the session has expired. False otherwise.
+     *
+     * @returns
+     */
+    public hasExpired(): boolean {
+        return Date.now() > this.getExpiry();
+    }
+
+    /**
+     * Returns the CSRF token set in the session. A null is returned
+     * if no CSRF token is found.
+     *
+     * @returns
+     */
+    public getCsrf(): string | null {
         return this.get('csrf');
     }
 
