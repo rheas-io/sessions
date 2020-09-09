@@ -1,6 +1,8 @@
 import path from 'path';
+import { Session } from './session';
 import { BaseStore } from './baseStore';
 import { files } from '@rheas/support/helpers';
+import { Exception } from '@rheas/errors/exception';
 import { ISession } from '@rheas/contracts/sessions';
 import { IEncrypter } from '@rheas/contracts/security';
 
@@ -34,9 +36,9 @@ export class FileStore extends BaseStore {
         try {
             const encodedData = await this.encode(session);
 
-            const filePath = path.resolve(this._sessionsDir, session.id());
+            const filePath = path.resolve(this._sessionsDir, session.getId());
 
-            return files().write(encodedData, filePath);
+            return await files().writeToFile(filePath, encodedData);
         } catch (err) {
             return false;
         }
@@ -50,13 +52,17 @@ export class FileStore extends BaseStore {
      */
     public async read(id: string): Promise<ISession | null> {
         try {
+            if (!Session.isValidToken(id)) {
+                throw new Exception('Invalid session id for session read request.');
+            }
+
             const filePath = path.resolve(this._sessionsDir, id);
-            const sessionData = await files().readFile(filePath);
+            const sessionData = await files().readTextFile(filePath);
 
             return this.decode(sessionData);
-        } catch (err) {
-            return null;
-        }
+        } catch (err) {}
+
+        return null;
     }
 
     /**

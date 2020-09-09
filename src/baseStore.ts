@@ -2,7 +2,7 @@ import { Session } from './session';
 import { Str } from '@rheas/support';
 import { AnyObject } from '@rheas/contracts';
 import { IEncrypter } from '@rheas/contracts/security';
-import { DecryptException } from '@rheas/errors/decrypt';
+import { EncrypterException } from '@rheas/errors/encrypter';
 import { ISession, ISessionStore, ISessionState } from '@rheas/contracts/sessions';
 
 export abstract class BaseStore implements ISessionStore {
@@ -68,11 +68,12 @@ export abstract class BaseStore implements ISessionStore {
      * @param session
      */
     protected async encode(session: ISession): Promise<string> {
-        const dataToSave: ISessionState = { session: '', encrypted: false };
-
-        // Touch the session before encoding it, so that the last
-        // accessed time is updated to now.
-        session = session.touch();
+        const dataToSave: ISessionState = {
+            session: '',
+            encrypted: false,
+            id: session.getId(),
+            expiry: session.getExpiry(),
+        };
 
         if (this._shouldEncrypt) {
             dataToSave.session = await this.encrypt(session);
@@ -88,23 +89,23 @@ export abstract class BaseStore implements ISessionStore {
     }
 
     /**
-     * Returnes a session from the encoded session data saved
-     * in the store. Initially decodes the data, then parses it
-     * into the ISessionState and performs the necessary process
-     * depending on the value of session state "encrypted" key.
+     * Returns a session from the encoded session data saved in the store. Initially
+     * decodes the data, then parses it into the ISessionState and performs the
+     * necessary process depending on the value of session state "encrypted" key.
      *
      * @param data
      */
     protected decode(data: string): ISession {
-        const sessionData: ISessionState = JSON.parse(Str.base64Decode(data));
+        const { id, expiry, encrypted, session }: ISessionState = JSON.parse(
+            Str.base64Decode(data),
+        );
 
-        if (sessionData.encrypted) {
-            return new Session(this.decrypt(sessionData.session));
+        if (encrypted) {
+            return new Session(id, expiry, this.decrypt(session));
         }
-        // If the session is not encrypted, the value of
-        // sessionData.session will be JSON string of the
-        // session data. Parse it and return a new session.
-        return new Session(JSON.parse(sessionData.session));
+        // If the session is not encrypted, the value of sessionData.session will be
+        // JSON string of the session data. Parse it and return a new session.
+        return new Session(id, expiry, JSON.parse(session));
     }
 
     /**
@@ -125,7 +126,7 @@ export abstract class BaseStore implements ISessionStore {
         const decrypted = this._encrypter.decrypt(data);
 
         if (typeof decrypted === 'string') {
-            throw new DecryptException('Error decrypting to session object.');
+            throw new EncrypterException('Error decrypting to session object.');
         }
         return decrypted;
     }
