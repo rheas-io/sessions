@@ -5,7 +5,6 @@ import { IApp } from '@rheas/contracts/core';
 import { AnyObject } from '@rheas/contracts';
 import { DriverManager } from '@rheas/services';
 import { ICookie } from '@rheas/contracts/cookies';
-import { IHashManager } from '@rheas/contracts/security';
 import { SameSite } from '@rheas/contracts/cookies/sameSite';
 import { InvalidArgumentException } from '@rheas/errors/invalidArgument';
 import { ISessionStore, ISession, ISessionManager } from '@rheas/contracts/sessions';
@@ -130,17 +129,18 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
     }
 
     /**
-     * Returns session token cookie.
+     * Returns a cookie with the given name, value and expiry. Other cookie
+     * properties will be set from the session configuration data.
      *
-     * @param session
+     * @param name
+     * @param value
+     * @param expiry
      */
-    public sessionCookieOf(session: ISession): ICookie {
-        const cookie = this.getCookieWithConfigProperties(
-            new Cookie(this.getSessionCookieName(), session.getId()),
-        );
+    public getCookie(name: string, value: string, expiry: number): ICookie {
+        const cookie = this.getCookieWithConfigProperties(new Cookie(name, value, expiry));
 
         if (!this.shouldExpireOnClose()) {
-            cookie.setExpire(session.getExpiry());
+            cookie.setExpire(expiry);
         }
 
         return cookie;
@@ -156,17 +156,6 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
         const sessionConfig = this.getSessionConfig();
 
         return !!Obj.get(sessionConfig, 'expire_on_close', false);
-    }
-
-    /**
-     * Returns CSRF token cookie.
-     *
-     * @param session
-     */
-    public csrfCookieOf(session: ISession): ICookie {
-        return this.getCookieWithConfigProperties(
-            new Cookie(this.getCsrfCookieName(), session.getCsrf(), session.getExpiry()),
-        );
     }
 
     /**
@@ -195,24 +184,6 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
      */
     public getSessionConfig(): AnyObject {
         return this._app.configs().get('session', {});
-    }
-
-    /**
-     * Returns hashed CSRF token
-     *
-     * @param session
-     */
-    public async hashedCsrfOf(session: ISession): Promise<string> {
-        let csrf = session.getCsrf();
-
-        if (csrf !== '') {
-            const hashManager: IHashManager = this._app.get('hashing');
-            const hasher = hashManager.getNewHasher('md5');
-
-            return await hasher.createHash(csrf);
-        }
-
-        return csrf;
     }
 
     /**
