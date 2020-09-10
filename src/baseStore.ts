@@ -114,7 +114,7 @@ export abstract class BaseStore implements ISessionStore {
      * @param session
      */
     public async encrypt(session: ISession): Promise<string> {
-        return await this._encrypter.encrypt(session.data());
+        return await this._encrypter.encrypt(Str.jsonToString(session.data()));
     }
 
     /**
@@ -123,7 +123,10 @@ export abstract class BaseStore implements ISessionStore {
      * @param data
      */
     public decrypt(data: string): AnyObject {
-        const decrypted = this._encrypter.decrypt(data);
+        let decrypted: string | AnyObject = this._encrypter.decrypt(data);
+
+        // Try to get a json object from the decrypted string.
+        decrypted = Str.stringToJson(decrypted, decrypted);
 
         if (typeof decrypted === 'string') {
             throw new EncrypterException('Error decrypting to session object.');
