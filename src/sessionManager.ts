@@ -32,13 +32,6 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
     protected _sessionCookieName: string = '_session';
 
     /**
-     * The cookie name to be used as CSRF cookie name.
-     *
-     * @var string
-     */
-    protected _csrfCookieName: string = '_csrf';
-
-    /**
      * Creates a new session manager.
      *
      * @param app
@@ -198,17 +191,6 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
     }
 
     /**
-     * Sets a new csrf cookie name.
-     *
-     * @param name
-     */
-    public setCsrfCookieName(name: string): ISessionManager {
-        this._csrfCookieName = this.validatedCookieName(name, 'CSRF');
-
-        return this;
-    }
-
-    /**
      * Throws an error if the cookie name is empty. Otherwise, returns
      * the name.
      *
@@ -229,14 +211,5 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
      */
     public getSessionCookieName(): string {
         return this._sessionCookieName;
-    }
-
-    /**
-     * Returns the name to be used for the csrf token cookie.
-     *
-     * @returns
-     */
-    public getCsrfCookieName(): string {
-        return this._csrfCookieName;
     }
 }
