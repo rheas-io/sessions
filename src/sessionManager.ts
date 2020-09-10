@@ -67,6 +67,29 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
     }
 
     /**
+     * Creates a new session and returns it.
+     *
+     * @returns
+     */
+    public async createSession(): Promise<ISession> {
+        const expiry = Date.now() + this.getSessionLifetimeInSeconds() * 1000;
+
+        return await Session.createSession(expiry);
+    }
+
+    /**
+     * Returns session lifetime in seconds.
+     *
+     * @returns
+     */
+    public getSessionLifetimeInSeconds(): number {
+        const sessionConfig = this.getSessionConfig();
+        const lifetimeInMinutes: number = Obj.get(sessionConfig, 'lifetime', 120);
+
+        return lifetimeInMinutes * 60;
+    }
+
+    /**
      * Loads a session with the given id from the session store. A `null`
      * is returned, if sessionId is not valid or a session with the given id is
      * not found.
@@ -103,29 +126,6 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
      */
     public getSession(): ISession | null {
         return this._session;
-    }
-
-    /**
-     * Creates a new session and returns it.
-     *
-     * @returns
-     */
-    public async createSession(): Promise<ISession> {
-        const expiry = Date.now() + this.getSessionLifetimeInSeconds() * 1000;
-
-        return await Session.createSession(expiry);
-    }
-
-    /**
-     * Returns session lifetime in seconds.
-     *
-     * @returns
-     */
-    public getSessionLifetimeInSeconds(): number {
-        const sessionConfig = this.getSessionConfig();
-        const lifetimeInMinutes: number = Obj.get(sessionConfig, 'lifetime', 120);
-
-        return lifetimeInMinutes * 60;
     }
 
     /**
