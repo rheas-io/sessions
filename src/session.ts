@@ -131,13 +131,13 @@ export class Session implements ISession {
     }
 
     /**
-     * Returns the CSRF token set in the session. A null is returned
+     * Returns the CSRF token set in the session. An empty string is returned
      * if no CSRF token is found.
      *
      * @returns
      */
-    public getCsrf(): string | null {
-        return this.get('csrf');
+    public getCsrf(): string {
+        return this.get('csrf', '');
     }
 
     /**

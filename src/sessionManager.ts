@@ -1,6 +1,12 @@
 import { Session } from './session';
+import { Obj } from '@rheas/support';
+import { Cookie } from '@rheas/cookies';
 import { IApp } from '@rheas/contracts/core';
+import { AnyObject } from '@rheas/contracts';
 import { DriverManager } from '@rheas/services';
+import { ICookie } from '@rheas/contracts/cookies';
+import { IHashManager } from '@rheas/contracts/security';
+import { SameSite } from '@rheas/contracts/cookies/sameSite';
 import { InvalidArgumentException } from '@rheas/errors/invalidArgument';
 import { ISessionStore, ISession, ISessionManager } from '@rheas/contracts/sessions';
 
@@ -56,7 +62,7 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
         if (!session || session.hasExpired()) {
             session = await this.createSession();
         }
-        this.setActiveSession(session);
+        this._session = session;
 
         return session;
     }
@@ -78,30 +84,16 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
     }
 
     /**
-     * Sets the given session as the current request session.
-     *
-     * @param session
-     */
-    public setActiveSession(session: ISession): ISessionManager {
-        this._session = session;
-
-        return this;
-    }
-
-    /**
      * Ends the current session by writing the session data on
      * the store.
      *
      * @returns
      */
-    public endSession(): ISessionManager {
-        const session = this.getSession();
+    public endSession(session: ISession): ISessionManager {
+        const driver = this.hasActiveDriver();
 
-        if (session) {
-            const driver = this.hasActiveDriver();
+        driver && driver.save(session);
 
-            driver && driver.save(session);
-        }
         return this;
     }
 
@@ -131,9 +123,96 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
      * @returns
      */
     public getSessionLifetimeInSeconds(): number {
-        const lifetimeInMinutes: number = this._app.configs().get('session.lifetime', 120);
+        const sessionConfig = this.getSessionConfig();
+        const lifetimeInMinutes: number = Obj.get(sessionConfig, 'lifetime', 120);
 
         return lifetimeInMinutes * 60;
+    }
+
+    /**
+     * Returns session token cookie.
+     *
+     * @param session
+     */
+    public sessionCookieOf(session: ISession): ICookie {
+        const cookie = this.getCookieWithConfigProperties(
+            new Cookie(this.getSessionCookieName(), session.getId()),
+        );
+
+        if (!this.shouldExpireOnClose()) {
+            cookie.setExpire(session.getExpiry());
+        }
+
+        return cookie;
+    }
+
+    /**
+     * Returns true if the expire_on_close value is set to truthy on the
+     * configurations.
+     *
+     * @returns
+     */
+    public shouldExpireOnClose(): boolean {
+        const sessionConfig = this.getSessionConfig();
+
+        return !!Obj.get(sessionConfig, 'expire_on_close', false);
+    }
+
+    /**
+     * Returns CSRF token cookie.
+     *
+     * @param session
+     */
+    public csrfCookieOf(session: ISession): ICookie {
+        return this.getCookieWithConfigProperties(
+            new Cookie(this.getCsrfCookieName(), session.getCsrf(), session.getExpiry()),
+        );
+    }
+
+    /**
+     * Sets the cookie properties given on the config file and returns
+     * the cookie.
+     *
+     * @param cookie
+     */
+    public getCookieWithConfigProperties(cookie: ICookie): ICookie {
+        const sessionConfig = this.getSessionConfig();
+
+        cookie.setPath(Obj.get(sessionConfig, 'path', '/'));
+        cookie.setDomain(Obj.get(sessionConfig, 'domain', ''));
+        cookie.setSecure(Obj.get(sessionConfig, 'secure', false));
+        cookie.setHttpOnly(Obj.get(sessionConfig, 'httpOnly', false));
+        cookie.setRaw(Obj.get(sessionConfig, 'raw', true));
+        cookie.setSameSite(Obj.get(sessionConfig, 'sameSite', SameSite.NONE));
+
+        return cookie;
+    }
+
+    /**
+     * Returns the session configurations.
+     *
+     * @returns
+     */
+    public getSessionConfig(): AnyObject {
+        return this._app.configs().get('session', {});
+    }
+
+    /**
+     * Returns hashed CSRF token
+     *
+     * @param session
+     */
+    public async hashedCsrfOf(session: ISession): Promise<string> {
+        let csrf = session.getCsrf();
+
+        if (csrf !== '') {
+            const hashManager: IHashManager = this._app.get('hashing');
+            const hasher = hashManager.getNewHasher('md5');
+
+            return await hasher.createHash(csrf);
+        }
+
+        return csrf;
     }
 
     /**
