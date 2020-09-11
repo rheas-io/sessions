@@ -47,9 +47,10 @@ export class Session implements ISession {
      * @param expiry
      */
     public static async createSession(expiry: number): Promise<ISession> {
-        const session = new Session(await Str.random(40), expiry);
+        const tokens = await Promise.all([Str.random(40), Str.random(40)]);
 
-        session.setCsrf(await Str.random(40));
+        const session = new Session(tokens[0], expiry);
+        session.setCsrf(tokens[1]);
 
         return session;
     }
