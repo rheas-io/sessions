@@ -70,10 +70,10 @@ export class FileStore extends BaseStore {
      *
      * @param id
      */
-    public remove(id: string): boolean {
+    public async remove(id: string): Promise<boolean> {
         const filePath = path.resolve(this._sessionsDir, id);
 
-        return files().remove(filePath);
+        return await files().remove(filePath);
     }
 
     /**

@@ -50,7 +50,7 @@ export abstract class BaseStore implements ISessionStore {
      *
      * @param id
      */
-    public abstract remove(id: string): boolean;
+    public abstract remove(id: string): Promise<boolean>;
 
     /**
      * Removes expired sessions from the store.
