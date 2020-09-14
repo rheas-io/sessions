@@ -11,6 +11,15 @@ type StoreGetter = undefined | ((app: IApp) => ISessionStore);
 
 export class SessionServiceProvider extends DeferredServiceProvider {
     /**
+     * Store registrars mapped to store keys.
+     *
+     * @var KeyValue
+     */
+    protected stores: KeyValue<StoreGetter> = {
+        file: this.getFileStore,
+    };
+
+    /**
      * Returns the session's service resolver. Sessions are
      * created on the request lifecycle.
      *
@@ -36,10 +45,8 @@ export class SessionServiceProvider extends DeferredServiceProvider {
      * @param sessionManager
      */
     protected registerStore(app: IApp, sessionManager: IDriverManager<ISessionStore>) {
-        const sessionStores: KeyValue<StoreGetter> = { file: this.getFileStore };
-
         let storeName = app.configs().get('session.store', 'file');
-        let sessionStoreGetter = sessionStores[storeName];
+        let sessionStoreGetter = this.stores[storeName];
 
         if (!sessionStoreGetter) {
             storeName = 'file';
