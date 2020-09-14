@@ -90,7 +90,7 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
      * @param sessionId
      */
     public async loadSession(sessionId: string): Promise<ISession | null> {
-        const driver = this.hasActiveDriver();
+        const driver = this.defaultDriver();
 
         if (driver && Session.isValidToken(sessionId)) {
             return await driver.read(sessionId);
@@ -105,7 +105,7 @@ export class SessionManager extends DriverManager<ISessionStore> implements ISes
      * @returns
      */
     public endSession(session: ISession): ISessionManager {
-        const driver = this.hasActiveDriver();
+        const driver = this.defaultDriver();
 
         driver && driver.save(session);
 

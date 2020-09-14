@@ -28,7 +28,7 @@ export class SessionServiceProvider extends DeferredServiceProvider {
     }
 
     /**
-     * Registers the applications ative session store. The function reads the
+     * Registers the applications default session store. The function reads the
      * session.store configuration data and registers the same driver, if it is a
      * valid store driver. Otherwise, file store is used as the default driver.
      *
@@ -36,17 +36,17 @@ export class SessionServiceProvider extends DeferredServiceProvider {
      * @param sessionManager
      */
     protected registerStore(app: IApp, sessionManager: IDriverManager<ISessionStore>) {
-        const fileStores: KeyValue<StoreGetter> = { file: this.getFileStore };
+        const sessionStores: KeyValue<StoreGetter> = { file: this.getFileStore };
 
         let storeName = app.configs().get('session.store', 'file');
-        let fileStoreGetter = fileStores[storeName];
+        let sessionStoreGetter = sessionStores[storeName];
 
-        if (!fileStoreGetter) {
+        if (!sessionStoreGetter) {
             storeName = 'file';
-            fileStoreGetter = this.getFileStore;
+            sessionStoreGetter = this.getFileStore;
         }
 
-        sessionManager.setActiveDriver(storeName, fileStoreGetter(app));
+        sessionManager.setDefaultDriver(storeName, sessionStoreGetter(app));
     }
 
     /**
