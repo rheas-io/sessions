@@ -1,6 +1,6 @@
-import { FileStore } from './fileStore';
 import { KeyValue } from '@rheas/contracts';
 import { IApp } from '@rheas/contracts/core';
+import { FileStore } from './stores/fileStore';
 import { ServiceProvider } from '@rheas/services';
 import { SessionManager } from './sessionManager';
 import { ISessionStore } from '@rheas/contracts/sessions';

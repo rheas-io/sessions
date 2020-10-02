@@ -1,6 +1,6 @@
 import path from 'path';
-import { Session } from './session';
-import { BaseStore } from './baseStore';
+import { Session } from '../session';
+import { BaseStore } from '../baseStore';
 import { Exception } from '@rheas/errors/exception';
 import { files } from '@rheas/support/helpers/files';
 import { ISession } from '@rheas/contracts/sessions';
