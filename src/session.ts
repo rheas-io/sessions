@@ -1,4 +1,5 @@
-import { Obj, Str } from '@rheas/support';
+import { Str } from '@rheas/support/str';
+import { Obj } from '@rheas/support/obj';
 import { AnyObject } from '@rheas/contracts';
 import { ISession } from '@rheas/contracts/sessions';
 import { InvalidArgumentException } from '@rheas/errors/invalidArgument';

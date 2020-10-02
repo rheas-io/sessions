@@ -1,5 +1,5 @@
 import { Session } from './session';
-import { Str } from '@rheas/support';
+import { Str } from '@rheas/support/str';
 import { AnyObject } from '@rheas/contracts';
 import { IEncrypter } from '@rheas/contracts/security';
 import { EncrypterException } from '@rheas/errors/encrypter';

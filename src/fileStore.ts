@@ -1,8 +1,8 @@
 import path from 'path';
 import { Session } from './session';
 import { BaseStore } from './baseStore';
-import { files } from '@rheas/support/helpers';
 import { Exception } from '@rheas/errors/exception';
+import { files } from '@rheas/support/helpers/files';
 import { ISession } from '@rheas/contracts/sessions';
 import { IEncrypter } from '@rheas/contracts/security';
 

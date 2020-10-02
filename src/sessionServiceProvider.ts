@@ -1,15 +1,15 @@
 import { FileStore } from './fileStore';
 import { KeyValue } from '@rheas/contracts';
 import { IApp } from '@rheas/contracts/core';
+import { ServiceProvider } from '@rheas/services';
 import { SessionManager } from './sessionManager';
-import { DeferredServiceProvider } from '@rheas/services';
 import { ISessionStore } from '@rheas/contracts/sessions';
 import { IDriverManager } from '@rheas/contracts/services';
 import { InstanceHandler } from '@rheas/contracts/container';
 
 type StoreGetter = undefined | ((app: IApp) => ISessionStore);
 
-export class SessionServiceProvider extends DeferredServiceProvider {
+export class SessionServiceProvider extends ServiceProvider {
     /**
      * Store registrars mapped to store keys.
      *
@@ -52,7 +52,6 @@ export class SessionServiceProvider extends DeferredServiceProvider {
             storeName = 'file';
             sessionStoreGetter = this.getFileStore;
         }
-
         sessionManager.setDefaultDriver(storeName, sessionStoreGetter(app));
     }
 
@@ -62,6 +61,6 @@ export class SessionServiceProvider extends DeferredServiceProvider {
      * @param app
      */
     protected getFileStore(app: IApp): ISessionStore {
-        return new FileStore(app.get('encrypt'), app.get('path.sessions'));
+        return new FileStore(app.get('encrypt'), app.path('sessions'));
     }
 }

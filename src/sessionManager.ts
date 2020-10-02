@@ -1,6 +1,6 @@
 import { Session } from './session';
-import { Obj } from '@rheas/support';
 import { Cookie } from '@rheas/cookies';
+import { Obj } from '@rheas/support/obj';
 import { IApp } from '@rheas/contracts/core';
 import { AnyObject } from '@rheas/contracts';
 import { DriverManager } from '@rheas/services';
