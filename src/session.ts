@@ -65,7 +65,7 @@ export class Session implements ISession {
         // Tokens should be an alphanumeric string with 0-9, A-Z and
         // a-z as the only characters and it should also be 40 chars
         // in length.
-        return token.length === 40 && Str.isAlphaNum(token);
+        return !!token && token.length === 40 && Str.isAlphaNum(token);
     }
 
     /**
