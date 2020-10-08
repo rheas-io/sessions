@@ -24,6 +24,8 @@ export class FileStore extends BaseStore {
         super(encrypter);
 
         this._sessionsDir = path;
+
+        files().mkdirSync(this._sessionsDir);
     }
 
     /**
