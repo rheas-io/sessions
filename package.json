@@ -1,6 +1,6 @@
 {
   "name": "@rheas/sessions",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Rheas session handlers",
   "main": "index.js",
   "keywords": [
